@@ -1,9 +1,15 @@
 package com.example.testnova.Service;
 
+import com.example.testnova.Model.Cvanalyse;
+import com.example.testnova.Model.Experience;
+import com.example.testnova.Model.Skill;
+import com.example.testnova.Repository.cvanalyseRep;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -13,12 +19,19 @@ public class CVservice {
 
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
+    private final cvanalyseRep cvanalyseRepository;
 
-    public CVservice(ChatClient.Builder chatClientbuilder) {
+    public CVservice(ChatClient.Builder chatClientbuilder, cvanalyseRep cvanalyseRepository) {
         this.chatClient = chatClientbuilder.build();
         this.objectMapper = new ObjectMapper();
+        this.cvanalyseRepository = cvanalyseRepository;
     }
 
+    /**
+     * Analyse le texte de CV via l'IA, nettoie/parse le JSON retourné, sauvegarde en base
+     * et retourne un objet prêt pour être sérialisé en JSON côté front.
+     * Le retour contient au minimum : { "id": savedId, "analysis": <parsedJson> }
+     */
     public Object analysecv(String cvtext) {
         System.out.println("[CVService] Début de l'analyse IA");
 
@@ -32,20 +45,13 @@ public class CVservice {
 
             {
               "resume": "Résumé intelligent du profil en 2 à 3 phrases",
-              "skills": {
-                     "hardSkills": [
-                       {
-                         "name": "Compétence",
-                         "level": "beginner|intermediate|advanced|expert"
-                       }
-                     ],
-                     "softSkills": [
-                       {
-                         "name": "Compétence",
-                         "level": "beginner|intermediate|advanced|expert"
-                       }
-                     ]
-                   },
+              "skills": [
+                {
+                  "name": "Compétence",
+                  "level": "beginner|intermediate|advanced|expert",
+                  "type" :"hardSkills|softSkills"
+                }
+              ],
               "experience": [
                 {
                   "company": "Nom de l'entreprise",
@@ -70,18 +76,74 @@ public class CVservice {
             String cleanJson = extractJsonFromResponse(jsonString);
             System.out.println("[CVService] JSON nettoyé: " + cleanJson.substring(0, Math.min(100, cleanJson.length())) + "...");
 
-            try {
-                Object parsedJson = objectMapper.readValue(cleanJson, Object.class);
-                System.out.println("[CVService] JSON parsé avec succès");
-                return parsedJson;
-            } catch (Exception parseException) {
-                System.err.println("[CVService] Erreur parsing JSON nettoyé: " + parseException.getMessage());
-                System.err.println("[CVService] JSON nettoyé: " + cleanJson);
-                throw new RuntimeException("Le format JSON retourné par l'IA est invalide après nettoyage", parseException);
+            Map<String, Object> parsedJson = objectMapper.readValue(cleanJson, Map.class);
+
+            System.out.println("[CVService] JSON parsé avec succès");
+
+            // Map parsed JSON to entity
+            Cvanalyse cvanalyse = new Cvanalyse();
+            Object resumeObj = parsedJson.get("resume");
+            if (resumeObj != null) cvanalyse.setResume(resumeObj.toString());
+
+            // Skills
+            List<Skill> skillEntities = new ArrayList<>();
+            Object skillsObj = parsedJson.get("skills");
+            if (skillsObj instanceof List<?> skillsList) {
+                for (Object s : skillsList) {
+                    if (s instanceof Map<?, ?> smap) {
+                        Skill skill = new Skill();
+                        Object name = smap.get("name");
+                        Object level = smap.get("level");
+                        Object type = smap.get("type");
+                        if (name != null) skill.setName(name.toString());
+                        if (level != null) skill.setLevel(level.toString());
+                        if (type != null) skill.setType(type.toString());
+                        skillEntities.add(skill);
+                    }
+                }
             }
+            cvanalyse.setSkills(skillEntities);
+
+            // Experiences
+            List<Experience> expEntities = new ArrayList<>();
+            Object expObj = parsedJson.get("experience");
+            if (expObj instanceof List<?> expList) {
+                for (Object e : expList) {
+                    if (e instanceof Map<?, ?> emap) {
+                        Experience ex = new Experience();
+                        Object company = emap.get("company");
+                        Object role = emap.get("role");
+                        Object year = emap.get("year");
+                        Object duration = emap.get("duration");
+                        Object competences = emap.get("competences");
+                        if (company != null) ex.setCompany(company.toString());
+                        if (role != null) ex.setRole(role.toString());
+                        if (year != null) ex.setYear(year.toString());
+                        if (duration != null) ex.setDuration(duration.toString());
+                        if (competences instanceof List<?> compList) {
+                            List<String> comps = new ArrayList<>();
+                            for (Object c : compList) if (c != null) comps.add(c.toString());
+                            ex.setCompetences(comps);
+                        }
+                        expEntities.add(ex);
+                    }
+                }
+            }
+            cvanalyse.setExperiences(expEntities);
+
+            // Persist in DB
+            Cvanalyse saved = cvanalyseRepository.save(cvanalyse);
+
+            // Return object with saved id and original analysis
+            Map<String, Object> result = Map.of(
+                    "id", saved.getId(),
+                    "analysis", parsedJson
+            );
+
+            return result;
 
         } catch (Exception e) {
-            System.err.println("[CVService] Erreur IA: " + e.getMessage());
+            System.err.println("[CVService] Erreur IA ou mapping: " + e.getMessage());
             throw new RuntimeException("Erreur lors de l'analyse IA: " + e.getMessage(), e);
         }
     }

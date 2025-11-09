@@ -32,7 +32,8 @@ public class CVcontroller {
             Object result = cvservice.analysecv(textcv);
 
             System.out.println("[Backend] Analyse terminée avec succès");
-            return ResponseEntity.ok(result);
+            // Retourner 201 Created avec le JSON résultant (inclut l'id en base)
+            return ResponseEntity.status(201).body(result);
 
         } catch (Exception e) {
             System.err.println("[Backend] Erreur lors de l'analyse: " + e.getMessage());
