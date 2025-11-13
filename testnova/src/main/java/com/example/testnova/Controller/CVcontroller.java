@@ -1,13 +1,16 @@
 package com.example.testnova.Controller;
 
+import com.example.testnova.Model.Cvanalyse;
 import com.example.testnova.Service.CVservice;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
+
 public class CVcontroller {
 
     private final CVservice cvservice;
@@ -41,4 +44,30 @@ public class CVcontroller {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("cvparuser/{id}")
+    public ResponseEntity<List<Cvanalyse>> getAllCVanalyseParUser(@PathVariable Long id) {
+        List<Cvanalyse> analyses = cvservice.findAllByUserId(id);
+        return ResponseEntity.ok(analyses);
+    }
+    @PostMapping("/analyse-offre")
+    public Object analyserCvAvecOffre(@RequestBody Map<String, Object> payload) {
+        try {
+            String cvText = (String) payload.get("cvText");
+            Object offre = payload.get("offre");
+
+            if (cvText == null || offre == null) {
+                return Map.of("error", "Le champ 'cvText' et 'offre' sont obligatoires.");
+            }
+
+            Object result = cvservice.analysecvoffre(cvText, offre);
+            return result;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of("error", "Erreur lors de l'analyse du CV : " + e.getMessage());
+        }
+    }
+
+
 }
