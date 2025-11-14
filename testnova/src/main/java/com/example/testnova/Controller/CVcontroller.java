@@ -22,6 +22,7 @@ public class CVcontroller {
     @PostMapping(value = "/analysecv", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> analyze(@RequestBody Map<String, String> body) {
         try {
+
             System.out.println("[Backend] Requête reçue pour analyse CV");
             String textcv = body.get("textcv");
 
