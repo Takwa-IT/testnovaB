@@ -13,14 +13,14 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*")
+                registry.addMapping("/api/**")
+                        .allowedOrigins("http://localhost:50204", "http://localhost:4200")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true)
                         .maxAge(3600);
 
-                System.out.println("[CORS] Configuration activée pour tous les ports localhost");
+                System.out.println("✅ [CORS] Configuration activée pour /api/**");
             }
         };
     }

@@ -51,7 +51,7 @@ public class CVcontroller {
         List<Cvanalyse> analyses = cvservice.findAllByUserId(id);
         return ResponseEntity.ok(analyses);
     }
-    @PostMapping("/analyse-offre")
+    @PostMapping("/api/analyse-offre")
     public Object analyserCvAvecOffre(@RequestBody Map<String, Object> payload) {
         try {
             String cvText = (String) payload.get("cvText");
