@@ -1,6 +1,7 @@
 // src/main/java/com/example/testnova/Model/User.java
 package com.example.testnova.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -14,6 +15,19 @@ public class User extends Compte {
 
     private LocalDate dateInscription = LocalDate.now();
 
+    @Column
+    private String telephone;
+
+    @Column
+    private String ville;
+
+    @Column
+    private String posteRecherche;
+
+    @Column
+    private boolean emailVerified = false;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Cvanalyse> mescvsAnalyses = new ArrayList<>();
 
@@ -66,5 +80,38 @@ public class User extends Compte {
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
+    }
+
+    // Getters/Setters pour les nouveaux champs
+    public String getTelephone() {
+        return telephone;
+    }
+
+    public void setTelephone(String telephone) {
+        this.telephone = telephone;
+    }
+
+    public String getVille() {
+        return ville;
+    }
+
+    public void setVille(String ville) {
+        this.ville = ville;
+    }
+
+    public String getPosteRecherche() {
+        return posteRecherche;
+    }
+
+    public void setPosteRecherche(String posteRecherche) {
+        this.posteRecherche = posteRecherche;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 }

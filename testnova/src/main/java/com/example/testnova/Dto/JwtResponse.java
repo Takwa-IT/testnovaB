@@ -11,14 +11,21 @@ public class JwtResponse {
     private String nom;
     private String prenom;
     private List<String> roles;
+    private String telephone;      // ← Ajouter
+    private String ville;          // ← Ajouter
+    private String posteRecherche; // ← Ajouter
 
-    public JwtResponse(String token, Long id, String email, String nom, String prenom, List<String> roles) {
+    public JwtResponse(String token, Long id, String email, String nom, String prenom, List<String> roles , String telephone, String ville, String posteRecherche) {
         this.token = token;
         this.id = id;
         this.email = email;
         this.nom = nom;
         this.prenom = prenom;
         this.roles = roles;
+        this.telephone = telephone;
+        this.ville = ville;
+        this.posteRecherche = posteRecherche;
+
     }
 
     // Getters et setters
@@ -36,4 +43,10 @@ public class JwtResponse {
     public void setPrenom(String prenom) { this.prenom = prenom; }
     public List<String> getRoles() { return roles; }
     public void setRoles(List<String> roles) { this.roles = roles; }
+    public String getTelephone() { return telephone; }
+    public void setTelephone(String telephone) { this.telephone = telephone; }
+    public String getVille() { return ville; }
+    public void setVille(String ville) { this.ville = ville; }
+    public String getPosteRecherche() { return posteRecherche; }
+
 }

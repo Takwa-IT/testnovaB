@@ -6,12 +6,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface cvanalyseRep extends JpaRepository<Cvanalyse, Long> {
-
-
     Cvanalyse getCvanalyseById(long id);
 
+    // Chercher par l'id de l'objet User associé
+    List<Cvanalyse> findAllByUser_Id(Long userId);
 
-    List<Cvanalyse> findAllByUserId(Long user_id);
-
- Cvanalyse getCvanalyseByUserId(Long user_id);
+    // Corrected method name so Spring Data can resolve the property path 'user.id'
+    Cvanalyse getCvanalyseByUser_Id(Long userId);
 }

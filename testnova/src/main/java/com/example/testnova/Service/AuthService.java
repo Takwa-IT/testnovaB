@@ -35,17 +35,20 @@ public class AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final PasswordResetService passwordResetService;
 
     public AuthService(AuthenticationManager authenticationManager,
                        UserRepository userRepository,
                        RoleRepository roleRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtUtil jwtUtil) {
+                       JwtUtil jwtUtil,
+                       PasswordResetService passwordResetService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.passwordResetService = passwordResetService;
     }
     public UserRepository getUserRepository() {
         return userRepository;
@@ -86,7 +89,10 @@ public class AuthService {
                     userDetails.getEmail(),
                     userDetails.getNom(),
                     userDetails.getPrenom(),
-                    roles
+                    roles ,
+                    userDetails.getTelephone(),      // ← Ajouter
+                    userDetails.getVille(),          // ← Ajouter
+                    userDetails.getPosteRecherche()  // ← Ajouter
             );
 
             System.out.println("✅ ✅ ✅ LOGIN RÉUSSI!");
@@ -139,6 +145,16 @@ public class AuthService {
         System.out.println("   - Rôles attribués: " + savedUser.getRoles().stream()
                 .map(role -> role.getName().name())
                 .collect(Collectors.joining(", ")));
+
+        // Envoyer l'email de vérification
+        try {
+            passwordResetService.sendVerificationEmail(savedUser);
+            System.out.println("📧 Email de vérification envoyé");
+        } catch (Exception e) {
+            System.err.println("⚠️ Erreur lors de l'envoi de l'email de vérification: " + e.getMessage());
+            // On continue même si l'email échoue
+        }
+
         System.out.println("=== 🏁 FIN INSCRIPTION ===");
 
         return savedUser;
@@ -304,4 +320,5 @@ public class AuthService {
 
         return result;
     }
+    
 }

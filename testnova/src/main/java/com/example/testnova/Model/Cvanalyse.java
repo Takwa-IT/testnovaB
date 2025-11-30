@@ -1,5 +1,6 @@
 package com.example.testnova.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,17 +28,16 @@ public class Cvanalyse {
     // Relation avec l'utilisateur qui possède ce CV
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnoreProperties({"motDePasse", "cvanalyses", "password"})
     private User user;
 
     // Liste des compétences techniques
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "cv_analyse_id")
     private List<Skill> Skills;
 
-
-
     // Liste des expériences professionnelles
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "cv_analyse_id")
     private List<Experience> experiences;
 
@@ -72,6 +72,14 @@ public class Cvanalyse {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public User getUser() {
+        return this.user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
 

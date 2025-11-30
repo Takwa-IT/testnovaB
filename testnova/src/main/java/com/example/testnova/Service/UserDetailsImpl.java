@@ -19,6 +19,9 @@ public class UserDetailsImpl implements UserDetails {
     private String nom;
     private String prenom;
     private String email;
+    private String telephone;
+    private String ville;
+    private String posteRecherche;
 
     @JsonIgnore
     private String motDePasse;
@@ -26,13 +29,17 @@ public class UserDetailsImpl implements UserDetails {
     private Collection<? extends GrantedAuthority> authorities;
 
     public UserDetailsImpl(Long id, String nom, String prenom, String email, String motDePasse,
-                           Collection<? extends GrantedAuthority> authorities) {
+                           Collection<? extends GrantedAuthority> authorities,
+                           String telephone, String ville, String posteRecherche) {
         this.id = id;
         this.nom = nom;
         this.prenom = prenom;
         this.email = email;
         this.motDePasse = motDePasse;
         this.authorities = authorities;
+        this.telephone = telephone;
+        this.ville = ville;
+        this.posteRecherche = posteRecherche;
     }
 
     public static UserDetailsImpl build(User user) {
@@ -41,12 +48,15 @@ public class UserDetailsImpl implements UserDetails {
                 .collect(Collectors.toList());
 
         return new UserDetailsImpl(
-                user.getId(),        // ✅ Direct getter
-                user.getNom(),       // ✅ Direct getter
-                user.getPrenom(),    // ✅ Direct getter
-                user.getEmail(),     // ✅ Direct getter
-                user.getMotDePasse(), // ✅ Direct getter
-                authorities);
+                user.getId(),
+                user.getNom(),
+                user.getPrenom(),
+                user.getEmail(),
+                user.getMotDePasse(),
+                authorities,
+                user.getTelephone(),
+                user.getVille(),
+                user.getPosteRecherche());
     }
 
     @Override
@@ -68,6 +78,18 @@ public class UserDetailsImpl implements UserDetails {
 
     public String getEmail() {
         return email;
+    }
+
+    public String getTelephone() {
+        return telephone;
+    }
+
+    public String getVille() {
+        return ville;
+    }
+
+    public String getPosteRecherche() {
+        return posteRecherche;
     }
 
     @Override
