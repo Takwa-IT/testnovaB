@@ -24,70 +24,74 @@ public class CVservice {
     private final cvanalyseRep cvanalyseRepository;
     private final UserRepository userRepository;
 
-    public CVservice(ChatClient.Builder chatClientbuilder, cvanalyseRep cvanalyseRepository, UserRepository userRepository) {
+    public CVservice(ChatClient.Builder chatClientbuilder, cvanalyseRep cvanalyseRepository,
+            UserRepository userRepository) {
         this.chatClient = chatClientbuilder.build();
         this.objectMapper = new ObjectMapper();
         this.cvanalyseRepository = cvanalyseRepository;
         this.userRepository = userRepository;
     }
 
-     public Object analysecvoffre(String cvtext, Object offre, Long userId) {
+    public Object analysecvoffre(String cvtext, Object offre, Long userId) {
         System.out.println("[CVService] Début de l'analyse IA pour userId: " + userId);
 
         String prompt = """
-        Tu es un expert en ressources humaines et en intelligence artificielle. 
-        Analyse le CV ci-dessous **en le comparant à l'offre d'emploi fournie**. 
-        Ton objectif est d'évaluer le niveau d'adéquation entre le profil et l'offre.
+                Tu es un expert en ressources humaines et en intelligence artificielle.
+                Analyse le CV ci-dessous **en le comparant à l'offre d'emploi fournie**.
+                Ton objectif est d'évaluer le niveau d'adéquation entre le profil et l'offre.
 
-        === CV TEXTE ===
-        %s
+                === CV TEXTE ===
+                %s
 
-        === OFFRE D'EMPLOI ===
-        %s
+                === OFFRE D'EMPLOI ===
+                %s
 
-        Réponds UNIQUEMENT avec un **JSON pur et valide** (pas de texte, pas de markdown, pas de backticks).
-        Si une information est manquante, laisse le champ vide.  
-        Ne commente pas et ne reformule pas le JSON.
+                Réponds UNIQUEMENT avec un **JSON pur et valide** (pas de texte, pas de markdown, pas de backticks).
+                Si une information est manquante, laisse le champ vide.
+                Ne commente pas et ne reformule pas le JSON.
 
-        {
-          "resume": "Résumé intelligent du profil en 2 à 3 phrases",
-          "skills": [
-            {
-              "name": "Compétence",
-              "level": "beginner|intermediate|advanced|expert",
-              "type": "hardSkills|softSkills"
-            }
-          ],
-          "experience": [
-            {
-              "company": "Nom de l'entreprise",
-              "role": "Poste occupé",
-              "year": "Année ou période",
-              "duration": "Durée en mois ou années",
-              "competences": ["Compétence utilisée 1", "Compétence utilisée 2"]
-            }
-          ],
-          "matching": {
-            "score": "Pourcentage de correspondance global (0-100)",
-            "matchedSkills": ["Compétence du CV présente dans l'offre"],
-            "missingSkills": ["Compétence demandée dans l'offre mais absente du CV"],
-            "comment": "Courte explication du matching"
-          }
-        }
-        """.formatted(cvtext, offre.toString());
+                {
+                  "resume": "Résumé intelligent du profil en 2 à 3 phrases",
+                  "skills": [
+                    {
+                      "name": "Compétence",
+                      "level": "beginner|intermediate|advanced|expert",
+                      "type": "hardSkills|softSkills"
+                    }
+                  ],
+                  "experience": [
+                    {
+                      "company": "Nom de l'entreprise",
+                      "role": "Poste occupé",
+                      "year": "Année ou période",
+                      "duration": "Durée en mois ou années",
+                      "competences": ["Compétence utilisée 1", "Compétence utilisée 2"]
+                    }
+                  ],
+                  "matching": {
+                    "score": "Pourcentage de correspondance global (0-100)",
+                    "matchedSkills": ["Compétence du CV présente dans l'offre"],
+                    "missingSkills": ["Compétence demandée dans l'offre mais absente du CV"],
+                    "comment": "Courte explication du matching"
+                  }
+                }
+                """.formatted(cvtext, offre.toString());
 
         try {
             var response = chatClient.prompt()
-                    .user(prompt)
+                    .user(Objects.requireNonNull(prompt))
                     .call();
 
             String jsonString = Objects.requireNonNull(response.content());
             System.out.println("[CVService] Analyse IA terminée");
-            System.out.println("[CVService] JSON brut: " + jsonString.substring(0, Math.min(200, jsonString.length())) + "...");
+            System.out.println(
+                    "[CVService] JSON brut: " + jsonString.substring(0, Math.min(200, jsonString.length())) + "...");
 
             String cleanJson = extractJsonFromResponse(jsonString);
-            System.out.println("[CVService] JSON nettoyé: " + cleanJson.substring(0, Math.min(100, cleanJson.length())) + "...");
+            System.out.println(
+                    "[CVService] JSON nettoyé: " + cleanJson.substring(0, Math.min(100, cleanJson.length())) + "...");
 
+            @SuppressWarnings("unchecked")
             Map<String, Object> parsedJson = objectMapper.readValue(cleanJson, Map.class);
 
             System.out.println("[CVService] JSON parsé avec succès");
@@ -105,7 +109,7 @@ public class CVservice {
 
             // 🟦 Map parsed JSON to entity
             Cvanalyse cvanalyse = new Cvanalyse();
-            
+
             // 🟦 Associer l'utilisateur au CV
             if (userId != null) {
                 User user = userRepository.findById(userId).orElse(null);
@@ -116,9 +120,10 @@ public class CVservice {
                     System.out.println("[CVService] Utilisateur non trouvé pour userId: " + userId);
                 }
             }
-            
+
             Object resumeObj = parsedJson.get("resume");
-            if (resumeObj != null) cvanalyse.setResume(resumeObj.toString());
+            if (resumeObj != null)
+                cvanalyse.setResume(resumeObj.toString());
 
             // Skills
             List<Skill> skillEntities = new ArrayList<>();
@@ -130,9 +135,12 @@ public class CVservice {
                         Object name = smap.get("name");
                         Object level = smap.get("level");
                         Object type = smap.get("type");
-                        if (name != null) skill.setName(name.toString());
-                        if (level != null) skill.setLevel(level.toString());
-                        if (type != null) skill.setType(type.toString());
+                        if (name != null)
+                            skill.setName(name.toString());
+                        if (level != null)
+                            skill.setLevel(level.toString());
+                        if (type != null)
+                            skill.setType(type.toString());
                         skillEntities.add(skill);
                     }
                 }
@@ -151,13 +159,19 @@ public class CVservice {
                         Object year = emap.get("year");
                         Object duration = emap.get("duration");
                         Object competences = emap.get("competences");
-                        if (company != null) ex.setCompany(company.toString());
-                        if (role != null) ex.setRole(role.toString());
-                        if (year != null) ex.setYear(year.toString());
-                        if (duration != null) ex.setDuration(duration.toString());
+                        if (company != null)
+                            ex.setCompany(company.toString());
+                        if (role != null)
+                            ex.setRole(role.toString());
+                        if (year != null)
+                            ex.setYear(year.toString());
+                        if (duration != null)
+                            ex.setDuration(duration.toString());
                         if (competences instanceof List<?> compList) {
                             List<String> comps = new ArrayList<>();
-                            for (Object c : compList) if (c != null) comps.add(c.toString());
+                            for (Object c : compList)
+                                if (c != null)
+                                    comps.add(c.toString());
                             ex.setCompetences(comps);
                         }
                         expEntities.add(ex);
@@ -172,8 +186,7 @@ public class CVservice {
             // 🟦 Return object with saved id and analysis
             Map<String, Object> result = Map.of(
                     "id", saved.getId(),
-                    "analysis", parsedJson
-            );
+                    "analysis", parsedJson);
 
             return result;
 
@@ -183,10 +196,9 @@ public class CVservice {
         }
     }
 
-
     private String extractJsonFromResponse(String response) {
         if (response == null || response.trim().isEmpty()) {
-            return "{}";  // Fallback JSON vide
+            return "{}"; // Fallback JSON vide
         }
 
         String cleaned = response.trim();

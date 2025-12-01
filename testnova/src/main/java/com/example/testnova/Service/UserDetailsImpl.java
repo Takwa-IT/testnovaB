@@ -15,31 +15,14 @@ import java.util.stream.Collectors;
 public class UserDetailsImpl implements UserDetails {
     private static final long serialVersionUID = 1L;
 
-    private Long id;
-    private String nom;
-    private String prenom;
-    private String email;
-    private String telephone;
-    private String ville;
-    private String posteRecherche;
-
     @JsonIgnore
-    private String motDePasse;
+    private User user;
 
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(Long id, String nom, String prenom, String email, String motDePasse,
-                           Collection<? extends GrantedAuthority> authorities,
-                           String telephone, String ville, String posteRecherche) {
-        this.id = id;
-        this.nom = nom;
-        this.prenom = prenom;
-        this.email = email;
-        this.motDePasse = motDePasse;
+    public UserDetailsImpl(User user, Collection<? extends GrantedAuthority> authorities) {
+        this.user = user;
         this.authorities = authorities;
-        this.telephone = telephone;
-        this.ville = ville;
-        this.posteRecherche = posteRecherche;
     }
 
     public static UserDetailsImpl build(User user) {
@@ -47,16 +30,7 @@ public class UserDetailsImpl implements UserDetails {
                 .map(role -> new SimpleGrantedAuthority(role.getName().name()))
                 .collect(Collectors.toList());
 
-        return new UserDetailsImpl(
-                user.getId(),
-                user.getNom(),
-                user.getPrenom(),
-                user.getEmail(),
-                user.getMotDePasse(),
-                authorities,
-                user.getTelephone(),
-                user.getVille(),
-                user.getPosteRecherche());
+        return new UserDetailsImpl(user, authorities);
     }
 
     @Override
@@ -65,41 +39,45 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public Long getId() {
-        return id;
+        return user.getId();
     }
 
     public String getNom() {
-        return nom;
+        return user.getNom();
     }
 
     public String getPrenom() {
-        return prenom;
+        return user.getPrenom();
     }
 
     public String getEmail() {
-        return email;
+        return user.getEmail();
     }
 
     public String getTelephone() {
-        return telephone;
+        return user.getTelephone();
     }
 
     public String getVille() {
-        return ville;
+        return user.getVille();
     }
 
     public String getPosteRecherche() {
-        return posteRecherche;
+        return user.getPosteRecherche();
+    }
+
+    public User getUser() {
+        return user;
     }
 
     @Override
     public String getPassword() {
-        return motDePasse;
+        return user.getMotDePasse();
     }
 
     @Override
     public String getUsername() {
-        return email;
+        return user.getEmail();
     }
 
     @Override
@@ -124,24 +102,24 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        UserDetailsImpl user = (UserDetailsImpl) o;
-        return Objects.equals(id, user.id);
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        UserDetailsImpl userDetails = (UserDetailsImpl) o;
+        return Objects.equals(user.getId(), userDetails.user.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(user.getId());
     }
 
     @Override
     public String toString() {
         return "UserDetailsImpl{" +
-                "id=" + id +
-                ", nom='" + nom + '\'' +
-                ", prenom='" + prenom + '\'' +
-                ", email='" + email + '\'' +
+                "id=" + user.getId() +
+                ", email='" + user.getEmail() + '\'' +
                 ", authorities=" + authorities +
                 '}';
     }

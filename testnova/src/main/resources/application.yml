@@ -1,17 +1,25 @@
 spring:
   application:
     name: TestNova
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/testnova?useSSL=false
+    url: jdbc:mysql://localhost:3306/testnova?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
     password:
+
   jpa:
+    hibernate:
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
-    hibernate:
-      ddl-auto: update
+        format_sql: true
+        show_sql: true
+        # Ces deux lignes forcent la création des FK même avec un simple Long userId
+        physical_naming_strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+        implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
+
   ai:
     openai:
       api-key: ${SPRING_AI_OPENAI_API_KEY}
@@ -20,11 +28,29 @@ spring:
         options:
           model: llama-3.1-8b-instant
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: testnovaplatform@gmail.com
+    password: vacr oxzj eaki ozpl
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
 logging:
   level:
     org:
       hibernate:
-        sql: DEBUG
+        SQL: DEBUG
+        type.descriptor.sql: TRACE
+    com.example.testnova: DEBUG
 
 server:
   port: 8082
@@ -37,22 +63,3 @@ app:
     sender: testnovaplatform@gmail.com
     sender-name: TestNova
   frontend-url: http://localhost:4200
-
-spring.mail:
-  host: smtp.gmail.com
-  port: 587
-  username: testnovaplatform@gmail.com
-  password: vacr oxzj eaki ozpl
-  properties:
-    mail:
-      smtp:
-        auth: true
-        starttls:
-          enable: true
-          required: true
-        connectiontimeout: 5000
-        timeout: 5000
-        writetimeout: 5000
-
-
-

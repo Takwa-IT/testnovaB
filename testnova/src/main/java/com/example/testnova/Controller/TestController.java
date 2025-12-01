@@ -1,26 +1,43 @@
 package com.example.testnova.Controller;
 
 import com.example.testnova.Model.TestResult;
+import com.example.testnova.Model.User;
+import com.example.testnova.Model.UserTestResult;
+import com.example.testnova.Repository.UserRepository;
+import com.example.testnova.Repository.userTestResultRepository;
 import com.example.testnova.Service.TestService;
+import com.example.testnova.Service.UserDetailsImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import com.example.testnova.Service.UserDetailsImpl;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/test")
 public class TestController {
 
     private final TestService testService;
-    private final ObjectMapper objectMapper; // Ajoutez cette ligne
+    private final ObjectMapper objectMapper;
+    private final userTestResultRepository userTestResultRepository;
+    private final UserRepository userRepository;
 
-
-    public TestController(TestService testService, ObjectMapper objectMapper) {
+    public TestController(TestService testService,
+            ObjectMapper objectMapper,
+            userTestResultRepository userTestResultRepository, UserRepository userRepository) {
         this.testService = testService;
-        this.objectMapper = objectMapper; // Initialisez-le ici
+        this.objectMapper = objectMapper;
+        this.userTestResultRepository = userTestResultRepository;
+        this.userRepository = userRepository;
     }
+
     @PostMapping(value = "/generateTest", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> generateTest(@RequestBody Map<String, Object> analysis) {
         try {
@@ -33,7 +50,6 @@ public class TestController {
             String analysisJson = objectMapper.writeValueAsString(analysis);
             Object testResult = testService.generateTest(analysisJson);
 
-            // Vérifier si c'est une erreur
             if (testResult instanceof Map && ((Map<?, ?>) testResult).containsKey("error")) {
                 return ResponseEntity.badRequest().body(testResult);
             }
@@ -43,26 +59,67 @@ public class TestController {
 
         } catch (Exception e) {
             System.err.println("[TestController] Erreur génération test: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "Erreur lors de la génération du test: " + e.getMessage()));
         }
     }
-    // src/main/java/com/example/testnova/Controller/TestController.java
+
+    // ENDPOINT CORRIGÉ : utilise l'utilisateur connecté automatiquement
     @PostMapping("/correct")
-    public ResponseEntity<TestResult> correctTest(@RequestBody Map<String, Object> submission) {
+    public ResponseEntity<TestResult> correctTest(
+            @RequestBody Map<String, Object> submission,
+            Authentication authentication) { // LIGNE OBLIGATOIRE
+
         try {
             TestResult result = testService.correctTest(submission);
 
-            // Validate score is on /10 scale
-            if (result.getTotalScore() > 10) {
-                System.out.println("[TestController] Warning: Score > 10, normalizing");
-                result.setTotalScore(result.getTotalScore() / 10);
+            // Normalisation du score
+            if (result.getTotalScore() > 10.0) {
+                result.setTotalScore(result.getTotalScore() / 10.0);
+            }
+
+            // SAUVEGARDE AVEC RELATION RÉELLE
+            if (authentication != null && authentication.isAuthenticated()) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+                User user = userRepository.findById(userDetails.getId())
+                        .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+                String jsonResult = objectMapper.writeValueAsString(result);
+                UserTestResult testResult = new UserTestResult(user, jsonResult);
+                userTestResultRepository.save(testResult);
+
+                System.out.println("TEST SAUVEGARDÉ EN BASE POUR USER ID = " + user.getId());
             }
 
             return ResponseEntity.ok(result);
+
         } catch (Exception e) {
-            System.err.println("[TestController] Erreur correction test: " + e.getMessage());
-            return ResponseEntity.status(500).build();
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
         }
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<TestResult>> getUserHistory(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserDetailsImpl userDetails)) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Long userId = userDetails.getId();
+        List<UserTestResult> saved = userTestResultRepository.findByUserIdOrderByDateTakenDesc(userId);
+
+        List<TestResult> results = saved.stream()
+                .map(utr -> {
+                    try {
+                        return objectMapper.readValue(utr.getTestResultJson(), TestResult.class);
+                    } catch (Exception e) {
+                        return null;
+                    }
+                })
+                .filter(r -> r != null)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(results);
     }
 }

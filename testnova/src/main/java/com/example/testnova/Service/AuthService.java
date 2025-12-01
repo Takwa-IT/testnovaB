@@ -38,11 +38,11 @@ public class AuthService {
     private final PasswordResetService passwordResetService;
 
     public AuthService(AuthenticationManager authenticationManager,
-                       UserRepository userRepository,
-                       RoleRepository roleRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtUtil jwtUtil,
-                       PasswordResetService passwordResetService) {
+            UserRepository userRepository,
+            RoleRepository roleRepository,
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil,
+            PasswordResetService passwordResetService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -50,25 +50,27 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
         this.passwordResetService = passwordResetService;
     }
+
     public UserRepository getUserRepository() {
         return userRepository;
     }
+
     // MODIFIEZ votre méthode authenticateUser dans AuthService :
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
         System.out.println("=== 🚨 DÉBUT DÉBOGAGE LOGIN ===");
         System.out.println("📧 Email reçu: " + loginRequest.getEmail());
 
         try {
-            // 🔥 SUPPRIMEZ la vérification manuelle - Laissez Spring Security faire son travail
-            // Spring Security va automatiquement appeler UserDetailsService et vérifier le mot de passe
+            // 🔥 SUPPRIMEZ la vérification manuelle - Laissez Spring Security faire son
+            // travail
+            // Spring Security va automatiquement appeler UserDetailsService et vérifier le
+            // mot de passe
 
             System.out.println("🔄 Tentative d'authentification Spring Security...");
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getEmail(),
-                            loginRequest.getMotDePasse()
-                    )
-            );
+                            loginRequest.getMotDePasse()));
 
             System.out.println("✅ Authentification Spring Security réussie!");
 
@@ -89,10 +91,10 @@ public class AuthService {
                     userDetails.getEmail(),
                     userDetails.getNom(),
                     userDetails.getPrenom(),
-                    roles ,
-                    userDetails.getTelephone(),      // ← Ajouter
-                    userDetails.getVille(),          // ← Ajouter
-                    userDetails.getPosteRecherche()  // ← Ajouter
+                    roles,
+                    userDetails.getTelephone(), // ← Ajouter
+                    userDetails.getVille(), // ← Ajouter
+                    userDetails.getPosteRecherche() // ← Ajouter
             );
 
             System.out.println("✅ ✅ ✅ LOGIN RÉUSSI!");
@@ -280,7 +282,8 @@ public class AuthService {
         boolean storedHashValid = passwordEncoder.matches(rawPassword, storedHash);
         System.out.println("✅ Hash stocké valide avec mdp original: " + storedHashValid);
 
-        // Vérifier si les deux hashs sont identiques (normalement non, car salt différent)
+        // Vérifier si les deux hashs sont identiques (normalement non, car salt
+        // différent)
         boolean hashesIdentical = newHash.equals(storedHash);
         System.out.println("🔍 Les deux hashs sont identiques: " + hashesIdentical);
 
@@ -320,5 +323,5 @@ public class AuthService {
 
         return result;
     }
-    
+
 }

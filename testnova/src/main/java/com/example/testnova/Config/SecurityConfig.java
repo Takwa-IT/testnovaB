@@ -29,7 +29,8 @@ public class SecurityConfig {
 
     // 🔥 ADD THIS BEAN - AuthenticationManager
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -62,9 +63,15 @@ public class SecurityConfig {
                         // Endpoints protégés (authentification requise)
                         .requestMatchers("/api/auth/profile").authenticated()
                         .requestMatchers("/api/auth/change-password").authenticated()
+                        .requestMatchers("/api/auth/update-profile").authenticated()
+                        .requestMatchers("/api/test/user-tests/**").authenticated()
+                        .requestMatchers("/api/test/submit-test").authenticated()
+                        .requestMatchers("api/test/get-user-results/**").authenticated()
+                        .requestMatchers("/api/test/correct").authenticated()
+                        .requestMatchers("/api/test/generateTest").authenticated()
+                        .requestMatchers("/api/test/user/userid/**").authenticated()
                         // Tout le reste est accessible
-                        .anyRequest().permitAll()
-                )
+                        .anyRequest().permitAll())
                 // Ajouter le filtre JWT avant UsernamePasswordAuthenticationFilter
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 

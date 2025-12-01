@@ -1,7 +1,6 @@
 package com.example.testnova.Controller;
 
 import com.example.testnova.Service.CVservice;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,18 +45,23 @@ public class CVcontroller {
         try {
             System.out.println("[Backend] Requête reçue pour récupérer les CV de l'utilisateur: " + userId);
             var cvs = cvservice.getCvsByUserId(userId);
-            
+
             // DEBUG: Afficher les détails de chaque CV
             System.out.println("[Backend] Nombre de CV trouvés: " + (cvs != null ? cvs.size() : 0));
             if (cvs != null) {
                 for (var cv : cvs) {
                     System.out.println("[Backend] CV ID: " + cv.getId());
-                    System.out.println("[Backend]   - Resume: " + (cv.getResume() != null ? cv.getResume().substring(0, Math.min(50, cv.getResume().length())) + "..." : "null"));
-                    System.out.println("[Backend]   - Skills: " + (cv.getSkills() != null ? cv.getSkills().size() : "null"));
-                    System.out.println("[Backend]   - Experiences: " + (cv.getExperiences() != null ? cv.getExperiences().size() : "null"));
+                    System.out.println("[Backend]   - Resume: " + (cv.getResume() != null
+                            ? cv.getResume().substring(0, Math.min(50, cv.getResume().length())) + "..."
+                            : "null"));
+                    System.out.println(
+                            "[Backend]   - Skills: " + (cv.getSkills() != null ? cv.getSkills().size() : "null"));
+                    System.out.println("[Backend]   - Experiences: "
+                            + (cv.getExperiences() != null ? cv.getExperiences().size() : "null"));
                     if (cv.getSkills() != null) {
                         for (var skill : cv.getSkills()) {
-                            System.out.println("[Backend]     Skill: " + skill.getName() + " (" + skill.getLevel() + ")");
+                            System.out
+                                    .println("[Backend]     Skill: " + skill.getName() + " (" + skill.getLevel() + ")");
                         }
                     }
                     if (cv.getExperiences() != null) {
@@ -67,7 +71,7 @@ public class CVcontroller {
                     }
                 }
             }
-            
+
             return ResponseEntity.ok(cvs);
         } catch (Exception e) {
             System.err.println("[Backend] Erreur lors de la récupération des CV: " + e.getMessage());

@@ -1,8 +1,6 @@
 package com.example.testnova.Model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 
 public class ProblemResult {
     private String userSolution;
@@ -12,7 +10,8 @@ public class ProblemResult {
     @JsonProperty("isGood")
     private boolean isGood;
 
-    public ProblemResult() {}
+    public ProblemResult() {
+    }
 
     public String getUserSolution() {
         return userSolution;

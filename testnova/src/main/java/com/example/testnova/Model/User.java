@@ -31,12 +31,8 @@ public class User extends Compte {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Cvanalyse> mescvsAnalyses = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
+    @ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
     // 🔥 CONSTRUCTEURS
@@ -52,9 +48,15 @@ public class User extends Compte {
         this.roles = roles;
     }
 
-    // 🔥 CORRECTION : Supprimer les méthodes intermédiaires et utiliser directement les getters/setters hérités
+    // 🔥 CORRECTION : Supprimer les méthodes intermédiaires et utiliser directement
+    // les getters/setters hérités
     public Long getUserId() {
         return this.id;
+    }
+
+    // Ajoute cette méthode dans ta classe User (déjà présente mais au cas où)
+    public Long getId() {
+        return id;
     }
 
     // Getters/Setters pour les champs spécifiques à User

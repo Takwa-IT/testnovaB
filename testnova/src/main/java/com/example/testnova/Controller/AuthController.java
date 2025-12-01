@@ -28,7 +28,8 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetService passwordResetService;
 
-    public AuthController(AuthService authService, PasswordEncoder passwordEncoder, PasswordResetService passwordResetService) {
+    public AuthController(AuthService authService, PasswordEncoder passwordEncoder,
+            PasswordResetService passwordResetService) {
         this.authService = authService;
         this.passwordEncoder = passwordEncoder;
         this.passwordResetService = passwordResetService;
@@ -53,9 +54,9 @@ public class AuthController {
             Map<String, Object> response = new HashMap<>();
             response.put("message", "User registered successfully!");
             response.put("user", Map.of(
-                    "id", user.getId(),        // ✅ Direct getter
-                    "email", user.getEmail(),  // ✅ Direct getter
-                    "nom", user.getNom(),      // ✅ Direct getter
+                    "id", user.getId(), // ✅ Direct getter
+                    "email", user.getEmail(), // ✅ Direct getter
+                    "nom", user.getNom(), // ✅ Direct getter
                     "prenom", user.getPrenom() // ✅ Direct getter
             ));
 
@@ -74,17 +75,23 @@ public class AuthController {
 
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(@RequestBody UpdateProfileRequest request,
-                                           @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         try {
             User user = authService.getUserRepository().findByEmail(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-            if (request.getNom() != null) user.setNom(request.getNom());
-            if (request.getPrenom() != null) user.setPrenom(request.getPrenom());
-            if (request.getEmail() != null) user.setEmail(request.getEmail());
-            if (request.getTelephone() != null) user.setTelephone(request.getTelephone());
-            if (request.getVille() != null) user.setVille(request.getVille());
-            if (request.getPosteRecherche() != null) user.setPosteRecherche(request.getPosteRecherche());
+            if (request.getNom() != null)
+                user.setNom(request.getNom());
+            if (request.getPrenom() != null)
+                user.setPrenom(request.getPrenom());
+            if (request.getEmail() != null)
+                user.setEmail(request.getEmail());
+            if (request.getTelephone() != null)
+                user.setTelephone(request.getTelephone());
+            if (request.getVille() != null)
+                user.setVille(request.getVille());
+            if (request.getPosteRecherche() != null)
+                user.setPosteRecherche(request.getPosteRecherche());
 
             authService.getUserRepository().save(user);
 
@@ -96,7 +103,7 @@ public class AuthController {
 
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request,
-                                            @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         try {
             User user = authService.getUserRepository().findByEmail(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
@@ -123,14 +130,12 @@ public class AuthController {
         try {
             passwordResetService.sendPasswordResetEmail(request.getEmail());
             return ResponseEntity.ok(Map.of(
-                    "message", "Un email de réinitialisation a été envoyé à " + request.getEmail()
-            ));
+                    "message", "Un email de réinitialisation a été envoyé à " + request.getEmail()));
         } catch (Exception e) {
             // Pour des raisons de sécurité, on renvoie toujours un succès
             // pour ne pas révéler si l'email existe ou non
             return ResponseEntity.ok(Map.of(
-                    "message", "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation."
-            ));
+                    "message", "Si un compte existe avec cet email, vous recevrez un lien de réinitialisation."));
         }
     }
 
@@ -156,7 +161,8 @@ public class AuthController {
     public ResponseEntity<?> verifyEmail(@RequestParam String token) {
         try {
             passwordResetService.verifyEmail(token);
-            return ResponseEntity.ok(Map.of("message", "Email vérifié avec succès! Vous pouvez maintenant vous connecter."));
+            return ResponseEntity
+                    .ok(Map.of("message", "Email vérifié avec succès! Vous pouvez maintenant vous connecter."));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
