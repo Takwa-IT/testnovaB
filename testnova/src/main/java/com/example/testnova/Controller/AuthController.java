@@ -8,6 +8,7 @@ import com.example.testnova.Dto.LoginRequest;
 import com.example.testnova.Dto.RegisterRequest;
 import com.example.testnova.Dto.ResetPasswordRequest;
 import com.example.testnova.Dto.UpdateProfileRequest;
+import com.example.testnova.Model.Compte;
 import com.example.testnova.Model.User;
 import com.example.testnova.Service.AuthService;
 import com.example.testnova.Service.PasswordResetService;
@@ -49,15 +50,15 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
         try {
-            User user = authService.registerUser(registerRequest);
+            Compte compte = authService.registerUser(registerRequest);
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "User registered successfully!");
             response.put("user", Map.of(
-                    "id", user.getId(), // ✅ Direct getter
-                    "email", user.getEmail(), // ✅ Direct getter
-                    "nom", user.getNom(), // ✅ Direct getter
-                    "prenom", user.getPrenom() // ✅ Direct getter
+                    "id", compte.getId(),
+                    "email", compte.getEmail(),
+                    "nom", compte.getNom(),
+                    "prenom", compte.getPrenom()
             ));
 
             return ResponseEntity.ok(response);

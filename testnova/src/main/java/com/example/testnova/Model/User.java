@@ -25,7 +25,7 @@ public class User extends Compte {
     private String posteRecherche;
 
     @Column
-    private boolean emailVerified = false;
+    private Boolean emailVerified = false;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
@@ -109,11 +109,11 @@ public class User extends Compte {
         this.posteRecherche = posteRecherche;
     }
 
-    public boolean isEmailVerified() {
+    public Boolean isEmailVerified() {
         return emailVerified;
     }
 
-    public void setEmailVerified(boolean emailVerified) {
+    public void setEmailVerified(Boolean emailVerified) {
         this.emailVerified = emailVerified;
     }
 }

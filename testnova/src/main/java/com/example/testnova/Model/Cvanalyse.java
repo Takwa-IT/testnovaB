@@ -21,15 +21,16 @@ public class Cvanalyse {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(columnDefinition = "TEXT")
     private String resume; // "Résumé intelligent du profil"
 
     private LocalDate dateAnalyse = LocalDate.now();
 
-    // Relation avec l'utilisateur qui possède ce CV
+    // Relation avec le candidat qui possède ce CV
     @ManyToOne
     @JoinColumn(name = "user_id")
     @JsonIgnoreProperties({"motDePasse", "cvanalyses", "password"})
-    private User user;
+    private Candidat user;
 
     // Liste des compétences techniques
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
@@ -74,11 +75,11 @@ public class Cvanalyse {
         this.id = id;
     }
 
-    public User getUser() {
+    public Candidat getUser() {
         return this.user;
     }
 
-    public void setUser(User user) {
+    public void setUser(Candidat user) {
         this.user = user;
     }
 

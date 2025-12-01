@@ -1,11 +1,11 @@
 package com.example.testnova.Service;
 
+import com.example.testnova.Model.Candidat;
 import com.example.testnova.Model.Cvanalyse;
 import com.example.testnova.Model.Experience;
 import com.example.testnova.Model.Skill;
-import com.example.testnova.Model.User;
+import com.example.testnova.Repository.CandidatRepository;
 import com.example.testnova.Repository.cvanalyseRep;
-import com.example.testnova.Repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
@@ -22,14 +22,14 @@ public class CVservice {
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
     private final cvanalyseRep cvanalyseRepository;
-    private final UserRepository userRepository;
+    private final CandidatRepository candidatRepository;
 
     public CVservice(ChatClient.Builder chatClientbuilder, cvanalyseRep cvanalyseRepository,
-            UserRepository userRepository) {
+            CandidatRepository candidatRepository) {
         this.chatClient = chatClientbuilder.build();
         this.objectMapper = new ObjectMapper();
         this.cvanalyseRepository = cvanalyseRepository;
-        this.userRepository = userRepository;
+        this.candidatRepository = candidatRepository;
     }
 
     public Object analysecvoffre(String cvtext, Object offre, Long userId) {
@@ -110,16 +110,26 @@ public class CVservice {
             // 🟦 Map parsed JSON to entity
             Cvanalyse cvanalyse = new Cvanalyse();
 
-            // 🟦 Associer l'utilisateur au CV
-            if (userId != null) {
-                User user = userRepository.findById(userId).orElse(null);
-                if (user != null) {
-                    cvanalyse.setUser(user);
-                    System.out.println("[CVService] CV associé à l'utilisateur: " + user.getEmail());
-                } else {
-                    System.out.println("[CVService] Utilisateur non trouvé pour userId: " + userId);
-                }
+            // 🟦 Associer le candidat au CV
+         if (userId != null) {
+    Candidat candidat = candidatRepository.findById(userId).orElse(null);
+    if (candidat != null) {
+        cvanalyse.setUser(candidat);
+        System.out.println("[CVService] CV associé au candidat: " + candidat.getEmail());
+        
+        // 🆕 Sauvegarder le titre du poste de l'offre dans le candidat
+        if (offre instanceof Map<?, ?> offreMap) {
+            Object titrePoste = offreMap.get("title");
+            if (titrePoste != null) {
+                candidat.setPosteRecherche(titrePoste.toString());
+                candidatRepository.save(candidat);
+                System.out.println("[CVService] Poste recherché mis à jour: " + titrePoste);
             }
+        }
+    } else {
+        System.out.println("[CVService] Candidat non trouvé pour userId: " + userId);
+    }
+}
 
             Object resumeObj = parsedJson.get("resume");
             if (resumeObj != null)

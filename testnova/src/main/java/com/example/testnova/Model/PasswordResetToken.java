@@ -15,8 +15,8 @@ public class PasswordResetToken {
     private String token;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "compte_id", nullable = false)
+    private Compte compte;
 
     @Column(nullable = false)
     private LocalDateTime expiryDate;
@@ -26,9 +26,9 @@ public class PasswordResetToken {
 
     public PasswordResetToken() {}
 
-    public PasswordResetToken(String token, User user, LocalDateTime expiryDate) {
+    public PasswordResetToken(String token, Compte compte, LocalDateTime expiryDate) {
         this.token = token;
-        this.user = user;
+        this.compte = compte;
         this.expiryDate = expiryDate;
     }
 
@@ -43,8 +43,8 @@ public class PasswordResetToken {
     public String getToken() { return token; }
     public void setToken(String token) { this.token = token; }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public Compte getCompte() { return compte; }
+    public void setCompte(Compte compte) { this.compte = compte; }
 
     public LocalDateTime getExpiryDate() { return expiryDate; }
     public void setExpiryDate(LocalDateTime expiryDate) { this.expiryDate = expiryDate; }

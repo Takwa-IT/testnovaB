@@ -1,12 +1,16 @@
 // src/main/java/com/example/testnova/Service/UserDetailsImpl.java
 package com.example.testnova.Service;
 
+import com.example.testnova.Model.Candidat;
+import com.example.testnova.Model.Compte;
+import com.example.testnova.Model.HR;
 import com.example.testnova.Model.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -16,21 +20,35 @@ public class UserDetailsImpl implements UserDetails {
     private static final long serialVersionUID = 1L;
 
     @JsonIgnore
-    private User user;
+    private Compte compte;
 
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImpl(User user, Collection<? extends GrantedAuthority> authorities) {
-        this.user = user;
+    public UserDetailsImpl(Compte compte, Collection<? extends GrantedAuthority> authorities) {
+        this.compte = compte;
         this.authorities = authorities;
     }
 
-    public static UserDetailsImpl build(User user) {
-        List<GrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName().name()))
-                .collect(Collectors.toList());
+    /**
+     * Construction avec héritage POO : le rôle est déterminé par le TYPE de classe
+     */
+    public static UserDetailsImpl build(Compte compte) {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        
+        // Déterminer le rôle basé sur le type de classe (héritage POO)
+        if (compte instanceof HR) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_HR"));
+        } else if (compte instanceof Candidat) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_CANDIDAT"));
+        } else if (compte instanceof User) {
+            // Rétrocompatibilité : utiliser les rôles de la table roles
+            User user = (User) compte;
+            authorities = user.getRoles().stream()
+                    .map(role -> new SimpleGrantedAuthority(role.getName().name()))
+                    .collect(Collectors.toList());
+        }
 
-        return new UserDetailsImpl(user, authorities);
+        return new UserDetailsImpl(compte, authorities);
     }
 
     @Override
@@ -39,45 +57,54 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     public Long getId() {
-        return user.getId();
+        return compte.getId();
     }
 
     public String getNom() {
-        return user.getNom();
+        return compte.getNom();
     }
 
     public String getPrenom() {
-        return user.getPrenom();
+        return compte.getPrenom();
     }
 
     public String getEmail() {
-        return user.getEmail();
+        return compte.getEmail();
     }
 
     public String getTelephone() {
-        return user.getTelephone();
+        if (compte instanceof Candidat) {
+            return ((Candidat) compte).getTelephone();
+        }
+        return null;
     }
 
     public String getVille() {
-        return user.getVille();
+        if (compte instanceof Candidat) {
+            return ((Candidat) compte).getVille();
+        }
+        return null;
     }
 
     public String getPosteRecherche() {
-        return user.getPosteRecherche();
+        if (compte instanceof Candidat) {
+            return ((Candidat) compte).getPosteRecherche();
+        }
+        return null;
     }
 
-    public User getUser() {
-        return user;
+    public Compte getCompte() {
+        return compte;
     }
 
     @Override
     public String getPassword() {
-        return user.getMotDePasse();
+        return compte.getMotDePasse();
     }
 
     @Override
     public String getUsername() {
-        return user.getEmail();
+        return compte.getEmail();
     }
 
     @Override
@@ -107,19 +134,19 @@ public class UserDetailsImpl implements UserDetails {
         if (o == null || getClass() != o.getClass())
             return false;
         UserDetailsImpl userDetails = (UserDetailsImpl) o;
-        return Objects.equals(user.getId(), userDetails.user.getId());
+        return Objects.equals(compte.getId(), userDetails.compte.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(user.getId());
+        return Objects.hash(compte.getId());
     }
 
     @Override
     public String toString() {
         return "UserDetailsImpl{" +
-                "id=" + user.getId() +
-                ", email='" + user.getEmail() + '\'' +
+                "id=" + compte.getId() +
+                ", email='" + compte.getEmail() + '\'' +
                 ", authorities=" + authorities +
                 '}';
     }

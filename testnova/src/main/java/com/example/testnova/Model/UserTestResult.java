@@ -12,10 +12,10 @@ public class UserTestResult {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // VRAIE RELATION → crée la FK automatiquement
+    // RELATION MODIFIÉE → Candidat au lieu de User
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_test_result_user"))
-    private User user;
+    @JoinColumn(name = "candidat_id", nullable = false, foreignKey = @ForeignKey(name = "fk_test_result_candidat"))
+    private Candidat candidat;
 
     @Column(name = "test_result_json", columnDefinition = "TEXT", nullable = false)
     private String testResultJson;
@@ -27,22 +27,22 @@ public class UserTestResult {
     public UserTestResult() {
     }
 
-    public UserTestResult(User user, String testResultJson) {
-        this.user = user;
+    public UserTestResult(Candidat candidat, String testResultJson) {
+        this.candidat = candidat;
         this.testResultJson = testResultJson;
     }
 
-    // Getters
+    // Getters/Setters
     public Long getId() {
         return id;
     }
 
-    public User getUser() {
-        return user;
+    public Candidat getCandidat() {
+        return candidat;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setCandidat(Candidat candidat) {
+        this.candidat = candidat;
     }
 
     public String getTestResultJson() {

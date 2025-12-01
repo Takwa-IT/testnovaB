@@ -5,47 +5,50 @@ import com.example.testnova.Config.JwtUtil;
 import com.example.testnova.Dto.JwtResponse;
 import com.example.testnova.Dto.LoginRequest;
 import com.example.testnova.Dto.RegisterRequest;
+import com.example.testnova.Model.Candidat;
+import com.example.testnova.Model.Compte;
 import com.example.testnova.Model.ERole;
-import com.example.testnova.Model.Role;
+import com.example.testnova.Model.HR;
 import com.example.testnova.Model.User;
-import com.example.testnova.Repository.RoleRepository;
+import com.example.testnova.Repository.CandidatRepository;
+import com.example.testnova.Repository.HRRepository;
 import com.example.testnova.Repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
 
     private final AuthenticationManager authenticationManager;
-    public final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    public final UserRepository userRepository;  // Garde pour rétrocompatibilité
+    private final CandidatRepository candidatRepository;
+    private final HRRepository hrRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final PasswordResetService passwordResetService;
 
     public AuthService(AuthenticationManager authenticationManager,
             UserRepository userRepository,
-            RoleRepository roleRepository,
+            CandidatRepository candidatRepository,
+            HRRepository hrRepository,
             PasswordEncoder passwordEncoder,
             JwtUtil jwtUtil,
             PasswordResetService passwordResetService) {
         this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
+        this.userRepository = userRepository;  // Garde pour rétrocompatibilité
+        this.candidatRepository = candidatRepository;
+        this.hrRepository = hrRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.passwordResetService = passwordResetService;
@@ -53,6 +56,14 @@ public class AuthService {
 
     public UserRepository getUserRepository() {
         return userRepository;
+    }
+
+    public CandidatRepository getCandidatRepository() {
+        return candidatRepository;
+    }
+
+    public HRRepository getHRRepository() {
+        return hrRepository;
     }
 
     // MODIFIEZ votre méthode authenticateUser dans AuthService :
@@ -112,7 +123,7 @@ public class AuthService {
     }
 
     @Transactional
-    public User registerUser(RegisterRequest registerRequest) {
+    public Compte registerUser(RegisterRequest registerRequest) {
         System.out.println("=== 📝 DÉBUT INSCRIPTION ===");
         System.out.println("Données reçues:");
         System.out.println("   - Nom: " + registerRequest.getNom());
@@ -121,36 +132,42 @@ public class AuthService {
         System.out.println("   - Rôle: " + registerRequest.getRole());
         System.out.println("   - Mot de passe: [PROTÉGÉ]");
 
-        // Vérification de l'email
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
+        // Vérification de l'email dans tous les repositories
+        if (candidatRepository.existsByEmail(registerRequest.getEmail()) || 
+            hrRepository.existsByEmail(registerRequest.getEmail()) ||
+            userRepository.existsByEmail(registerRequest.getEmail())) {
             System.out.println("❌ Email déjà utilisé: " + registerRequest.getEmail());
             throw new RuntimeException("Error: Email is already taken!");
         }
         System.out.println("✅ Email disponible");
 
-        // Création de l'utilisateur
-        User user = createUserFromRequest(registerRequest);
+        // Déterminer le rôle
+        ERole roleEnum = determineRoleEnum(registerRequest.getRole());
+        System.out.println("🎯 Rôle déterminé: " + roleEnum);
 
-        // Attribution des rôles
-        Set<Role> roles = determineUserRoles(registerRequest.getRole());
-        user.setRoles(roles);
-
-        System.out.println("🔄 Sauvegarde de l'utilisateur...");
-
-        // Sauvegarde
-        User savedUser = userRepository.save(user);
+        // Créer Candidat ou HR selon le rôle
+        Compte savedCompte;
+        
+        if (roleEnum == ERole.ROLE_HR) {
+            HR hr = createHRFromRequest(registerRequest);
+            System.out.println("🔄 Sauvegarde du HR...");
+            savedCompte = hrRepository.save(hr);
+            System.out.println("✅ HR sauvegardé avec ID: " + savedCompte.getId());
+        } else {
+            Candidat candidat = createCandidatFromRequest(registerRequest);
+            System.out.println("🔄 Sauvegarde du Candidat...");
+            savedCompte = candidatRepository.save(candidat);
+            System.out.println("✅ Candidat sauvegardé avec ID: " + savedCompte.getId());
+        }
 
         System.out.println("✅ Utilisateur sauvegardé avec succès:");
-        System.out.println("   - ID: " + savedUser.getId());
-        System.out.println("   - Email: " + savedUser.getEmail());
-        System.out.println("   - Mot de passe hashé: " + savedUser.getMotDePasse());
-        System.out.println("   - Rôles attribués: " + savedUser.getRoles().stream()
-                .map(role -> role.getName().name())
-                .collect(Collectors.joining(", ")));
+        System.out.println("   - ID: " + savedCompte.getId());
+        System.out.println("   - Email: " + savedCompte.getEmail());
+        System.out.println("   - Type: " + savedCompte.getClass().getSimpleName());
 
         // Envoyer l'email de vérification
         try {
-            passwordResetService.sendVerificationEmail(savedUser);
+            passwordResetService.sendVerificationEmail(savedCompte);
             System.out.println("📧 Email de vérification envoyé");
         } catch (Exception e) {
             System.err.println("⚠️ Erreur lors de l'envoi de l'email de vérification: " + e.getMessage());
@@ -159,65 +176,69 @@ public class AuthService {
 
         System.out.println("=== 🏁 FIN INSCRIPTION ===");
 
-        return savedUser;
+        return savedCompte;
     }
 
     /**
-     * Crée un utilisateur à partir de la requête d'inscription
+     * Crée un Candidat à partir de la requête d'inscription
      */
-    private User createUserFromRequest(RegisterRequest request) {
-        User user = new User();
-        user.setNom(request.getNom());
-        user.setPrenom(request.getPrenom());
-        user.setEmail(request.getEmail());
+    private Candidat createCandidatFromRequest(RegisterRequest request) {
+        Candidat candidat = new Candidat();
+        candidat.setNom(request.getNom());
+        candidat.setPrenom(request.getPrenom());
+        candidat.setEmail(request.getEmail());
 
         String rawPassword = request.getMotDePasse();
         String encodedPassword = passwordEncoder.encode(rawPassword);
-        user.setMotDePasse(encodedPassword);
+        candidat.setMotDePasse(encodedPassword);
 
         System.out.println("🔑 Hachage du mot de passe:");
         System.out.println("   - Mot de passe original: " + rawPassword);
         System.out.println("   - Mot de passe hashé: " + encodedPassword);
 
-        return user;
+        return candidat;
     }
 
     /**
-     * Détermine les rôles de l'utilisateur en fonction de la requête
+     * Crée un HR à partir de la requête d'inscription
      */
-    private Set<Role> determineUserRoles(String roleRequest) {
-        Set<Role> roles = new HashSet<>();
-        ERole roleEnum;
+    private HR createHRFromRequest(RegisterRequest request) {
+        HR hr = new HR();
+        hr.setNom(request.getNom());
+        hr.setPrenom(request.getPrenom());
+        hr.setEmail(request.getEmail());
 
+        String rawPassword = request.getMotDePasse();
+        String encodedPassword = passwordEncoder.encode(rawPassword);
+        hr.setMotDePasse(encodedPassword);
+
+        System.out.println("🔑 Hachage du mot de passe:");
+        System.out.println("   - Mot de passe original: " + rawPassword);
+        System.out.println("   - Mot de passe hashé: " + encodedPassword);
+
+        return hr;
+    }
+
+    /**
+     * Détermine le rôle enum en fonction de la requête
+     */
+    private ERole determineRoleEnum(String roleRequest) {
         if (roleRequest == null) {
-            // Rôle par défaut
-            roleEnum = ERole.ROLE_CANDIDAT;
-            System.out.println("🎯 Attribution du rôle par défaut: " + roleEnum);
-        } else {
-            // Mapping des rôles depuis la requête
-            switch (roleRequest.toUpperCase()) {
-                case "HR":
-                case "ROLE_HR":
-                    roleEnum = ERole.ROLE_HR;
-                    break;
-                case "CANDIDAT":
-                case "ROLE_CANDIDAT":
-                default:
-                    roleEnum = ERole.ROLE_CANDIDAT;
-            }
-            System.out.println("🎯 Rôle demandé: " + roleRequest + " → Rôle attribué: " + roleEnum);
+            System.out.println("🎯 Attribution du rôle par défaut: ROLE_CANDIDAT");
+            return ERole.ROLE_CANDIDAT;
         }
 
-        // Récupération du rôle depuis la base de données
-        Role role = roleRepository.findByName(roleEnum)
-                .orElseThrow(() -> {
-                    System.out.println("❌ Rôle non trouvé en base: " + roleEnum);
-                    return new RuntimeException("Error: Role " + roleEnum + " is not found in database.");
-                });
-
-        System.out.println("✅ Rôle trouvé en base: " + role.getName());
-        roles.add(role);
-        return roles;
+        switch (roleRequest.toUpperCase()) {
+            case "HR":
+            case "ROLE_HR":
+                System.out.println("🎯 Rôle demandé: " + roleRequest + " → Rôle attribué: ROLE_HR");
+                return ERole.ROLE_HR;
+            case "CANDIDAT":
+            case "ROLE_CANDIDAT":
+            default:
+                System.out.println("🎯 Rôle demandé: " + roleRequest + " → Rôle attribué: ROLE_CANDIDAT");
+                return ERole.ROLE_CANDIDAT;
+        }
     }
 
     /**

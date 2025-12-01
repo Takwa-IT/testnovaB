@@ -3,8 +3,10 @@ package com.example.testnova.Model;
 
 import jakarta.persistence.*;
 
-@MappedSuperclass
-public class Compte {
+@Entity
+@Table(name = "compte")
+@Inheritance(strategy = InheritanceType.JOINED)
+public abstract class Compte {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;

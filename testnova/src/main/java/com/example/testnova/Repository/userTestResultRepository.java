@@ -10,9 +10,9 @@ import java.util.List;
 @Repository
 public interface userTestResultRepository extends JpaRepository<UserTestResult, Long> {
 
-    // IMPORTANT : on utilise "user.id" maintenant
-    List<UserTestResult> findByUser_IdOrderByDateTakenDesc(Long userId);
+    // Méthodes adaptées pour Candidat au lieu de User
+    List<UserTestResult> findByCandidat_IdOrderByDateTakenDesc(Long candidatId);
 
-    // Ou encore mieux (plus propre)
-    List<UserTestResult> findByUserIdOrderByDateTakenDesc(Long userId);
+    // Version alternative (plus propre)
+    List<UserTestResult> findByCandidatIdOrderByDateTakenDesc(Long candidatId);
 }
