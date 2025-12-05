@@ -1,0 +1,20 @@
+# Fichiers sensibles
+.env
+
+# Données Docker
+mysql_data/
+
+# Fichiers IDE
+.idea/
+*.iml
+.vscode/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build artifacts
+testnova/target/
